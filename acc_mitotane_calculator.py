@@ -52,7 +52,7 @@ def sgras(age, sympt, ensat, rstatus, ki67):
 # ---------- UI & Styling ----------
 st.set_page_config(page_title="ACC Mitotane Benefit Calculator", layout="wide")
 
-# Custom CSS for Premium Design
+# Custom CSS for Premium & Responsive Design
 st.markdown(
     """
     <style>
@@ -79,14 +79,22 @@ st.markdown(
         margin-bottom: 24px;
     }
     
-    /* Custom metric card */
+    /* Custom metric card - Fully Responsive Flexbox */
+    .metric-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 12px;
+        width: 100%;
+    }
     .metric-card {
         background-color: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 10px;
-        padding: 12px 16px;
+        padding: 14px 18px;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-        margin-bottom: 12px;
+        flex: 1 1 180px; /* Grows and wraps beautifully down to 180px */
+        min-width: 160px;
     }
     
     /* NNT Card Styling */
@@ -94,9 +102,10 @@ st.markdown(
         background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
         border: 1px solid #e2e8f0;
         border-radius: 12px;
-        padding: 16px 20px;
+        padding: 18px 20px;
         margin: 12px 0 16px 0;
         box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        width: 100%;
     }
     
     /* Risk Badges */
@@ -120,6 +129,24 @@ st.markdown(
         font-weight: 500 !important;
         color: #334155 !important;
         margin-bottom: 6px !important;
+    }
+    
+    /* Custom spacing for tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 45px;
+        white-space: pre-wrap;
+        background-color: #f8fafc;
+        border-radius: 8px 8px 0 0;
+        padding: 10px 16px;
+        border: 1px solid #e2e8f0;
+        border-bottom: none;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #ffffff !important;
+        font-weight: 600;
     }
     </style>
     """,
@@ -179,104 +206,200 @@ with col_out:
         unsafe_allow_html=True
     )
     
-    # Results Columns
-    res_os, res_pfs = st.columns(2, gap="medium")
+    # Responsive Tabbed Interface for OS and PFS
+    tab_os, tab_pfs = st.tabs(["5-year Overall Survival (OS)", f"{horizon_pfs//12}-year Progression-Free Survival (PFS)"])
     
-    for col, (ep, hz) in zip([res_os, res_pfs], [("OS", horizon_os), ("PFS", horizon_pfs)]):
-        with col:
-            yr_lbl = hz // 12
-            lbl = (f"{yr_lbl}-year Overall survival" if ep == "OS"
-                   else f"{yr_lbl}-year Progression-free survival")
-            st.markdown(f"<div style='font-size: 1.15rem; font-weight: 600; color: #0f172a; margin-bottom: 12px;'>{lbl}</div>", unsafe_allow_html=True)
-            
-            s0 = surv_at(ep, hz, 0, **kw); s1 = surv_at(ep, hz, 1, **kw)
-            rec = CATE_CI[f"{age}-{sympt}-{ensat}-{rstatus}-{ki67}"][f"{ep}{hz}"]
-            c_pt, c_lo, c_hi = rec["cate"], rec["lo"], rec["hi"]
-            nnt, nnt_lo, nnt_hi = rec["nnt"], rec.get("nnt_lo"), rec.get("nnt_hi")
-            yr = hz // 12
-            
-            # Custom styled columns for metric displays
-            st.markdown(
-                f"<div style='display: flex; gap: 10px; margin-bottom: 8px;'>"
-                f"  <div class='metric-card' style='flex: 1; border-left: 4px solid #ef4444;'>"
-                f"    <div style='font-size: 10px; font-weight: 500; color: #64748b; text-transform: uppercase;'>{ep} without mitotane</div>"
-                f"    <div style='font-size: 22px; font-weight: 700; color: #0f172a; margin-top: 4px;'>{s0*100:.1f}%</div>"
-                f"  </div>"
-                f"  <div class='metric-card' style='flex: 1; border-left: 4px solid #3b82f6;'>"
-                f"    <div style='font-size: 10px; font-weight: 500; color: #64748b; text-transform: uppercase;'>{ep} with mitotane</div>"
-                f"    <div style='font-size: 22px; font-weight: 700; color: #0f172a; margin-top: 4px;'>{s1*100:.1f}%</div>"
-                f"  </div>"
-                f"</div>",
-                unsafe_allow_html=True
-            )
-            
-            nnt_ci = (f"{nnt_lo}–{nnt_hi}" if nnt_lo and nnt_hi else "—")
-            outcome = "survivor" if ep == "OS" else "progression-free patient"
-            tip = (f"One additional {yr}-year {outcome} is expected for every {nnt} patients "
-                   f"treated with adjuvant mitotane. NNT = 1 / absolute benefit; the 95% CI is "
-                   f"obtained by inverting the bounds of the absolute-benefit CI (Altman 1998). "
-                   f"Confidence intervals are from a 1000-replicate bootstrap of the "
-                   f"doubly-robust IPTW Cox model.")
-            
-            st.markdown(
-                f"<div class='nnt-card'>"
-                f"  <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;'>"
-                f"    <span style='font-size: 12px; font-weight: 500; color: #475569;'>Number needed to treat ({yr}-year {ep})</span>"
-                f"    <span title=\"{tip}\" style='cursor:help;color:#94a3b8;font-size:14px;'>&#9432;</span>"
-                f"  </div>"
-                f"  <div style='display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px;'>"
-                f"    <span style='font-size: 34px; font-weight: 700; color: #1e3a8a; line-height: 1;'>{nnt}</span>"
-                f"    <span style='font-size: 14px; font-weight: 500; color: #1e40af;'>(95% CI {nnt_ci})</span>"
-                f"  </div>"
-                f"  <div style='font-size: 12px; color: #475569; margin-top: 4px;'>"
-                f"    Absolute {ep} benefit <b>{c_pt:+.1f}%</b> (95% CI {c_lo:+.1f} to {c_hi:+.1f} pp)"
-                f"  </div>"
-                f"</div>",
-                unsafe_allow_html=True
-            )
-            
-            # Interactive Plotly Step Chart
-            tg, S0 = surv_curve(ep, 0, **kw); _, S1 = surv_curve(ep, 1, **kw)
-            mask = tg <= hz
-            
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=tg[mask],
-                y=S0[mask] * 100,
-                line=dict(shape="hv", color="#ef4444", width=2.5),
-                name="No mitotane",
-                mode="lines",
-                hovertemplate="No mitotane: %{y:.1f}%<extra></extra>"
-            ))
-            fig.add_trace(go.Scatter(
-                x=tg[mask],
-                y=S1[mask] * 100,
-                line=dict(shape="hv", color="#3b82f6", width=2.5),
-                name="Adj. mitotane",
-                mode="lines",
-                hovertemplate="Adj. mitotane: %{y:.1f}%<extra></extra>"
-            ))
-            
-            fig.update_layout(
-                xaxis_title="Months",
-                yaxis_title=f"{ep} probability (%)",
-                yaxis=dict(range=[0, 100], gridcolor="#f1f5f9", zeroline=False),
-                xaxis=dict(range=[0, hz], gridcolor="#f1f5f9", zeroline=False),
-                plot_bgcolor="rgba(0,0,0,0)",
-                paper_bgcolor="rgba(0,0,0,0)",
-                margin=dict(l=40, r=10, t=10, b=40),
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="right",
-                    x=1,
-                    font=dict(size=10)
-                ),
-                hovermode="x unified",
-                height=260
-            )
-            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+    # OS Content
+    with tab_os:
+        ep, hz = "OS", horizon_os
+        yr_lbl = hz // 12
+        lbl = f"{yr_lbl}-year Overall survival"
+        st.markdown(f"<div style='font-size: 1.15rem; font-weight: 600; color: #0f172a; margin: 12px 0;'>{lbl}</div>", unsafe_allow_html=True)
+        
+        s0 = surv_at(ep, hz, 0, **kw); s1 = surv_at(ep, hz, 1, **kw)
+        rec = CATE_CI[f"{age}-{sympt}-{ensat}-{rstatus}-{ki67}"][f"{ep}{hz}"]
+        c_pt, c_lo, c_hi = rec["cate"], rec["lo"], rec["hi"]
+        nnt, nnt_lo, nnt_hi = rec["nnt"], rec.get("nnt_lo"), rec.get("nnt_hi")
+        yr = hz // 12
+        
+        # Responsive metrics
+        st.markdown(
+            f"<div class='metric-container'>"
+            f"  <div class='metric-card' style='border-left: 4px solid #ef4444;'>"
+            f"    <div style='font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;'>{ep} without mitotane</div>"
+            f"    <div style='font-size: 26px; font-weight: 700; color: #0f172a; margin-top: 4px;'>{s0*100:.1f}%</div>"
+            f"  </div>"
+            f"  <div class='metric-card' style='border-left: 4px solid #3b82f6;'>"
+            f"    <div style='font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;'>{ep} with mitotane</div>"
+            f"    <div style='font-size: 26px; font-weight: 700; color: #0f172a; margin-top: 4px;'>{s1*100:.1f}%</div>"
+            f"  </div>"
+            f"</div>",
+            unsafe_allow_html=True
+        )
+        
+        nnt_ci = (f"{nnt_lo}–{nnt_hi}" if nnt_lo and nnt_hi else "—")
+        outcome = "survivor" if ep == "OS" else "progression-free patient"
+        tip = (f"One additional {yr}-year {outcome} is expected for every {nnt} patients "
+               f"treated with adjuvant mitotane. NNT = 1 / absolute benefit; the 95% CI is "
+               f"obtained by inverting the bounds of the absolute-benefit CI (Altman 1998). "
+               f"Confidence intervals are from a 1000-replicate bootstrap of the "
+               f"doubly-robust IPTW Cox model.")
+        
+        st.markdown(
+            f"<div class='nnt-card'>"
+            f"  <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; flex-wrap: wrap; gap: 6px;'>"
+            f"    <span style='font-size: 12px; font-weight: 500; color: #475569;'>Number needed to treat ({yr}-year {ep})</span>"
+            f"    <span title=\"{tip}\" style='cursor:help;color:#94a3b8;font-size:14px;'>&#9432;</span>"
+            f"  </div>"
+            f"  <div style='display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px; flex-wrap: wrap;'>"
+            f"    <span style='font-size: 34px; font-weight: 700; color: #1e3a8a; line-height: 1;'>{nnt}</span>"
+            f"    <span style='font-size: 14px; font-weight: 500; color: #1e40af;'>(95% CI {nnt_ci})</span>"
+            f"  </div>"
+            f"  <div style='font-size: 12px; color: #475569; margin-top: 4px;'>"
+            f"    Absolute {ep} benefit <b>{c_pt:+.1f}%</b> (95% CI {c_lo:+.1f} to {c_hi:+.1f} pp)"
+            f"  </div>"
+            f"</div>",
+            unsafe_allow_html=True
+        )
+        
+        # Interactive Plotly Step Chart
+        tg, S0 = surv_curve(ep, 0, **kw); _, S1 = surv_curve(ep, 1, **kw)
+        mask = tg <= hz
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=tg[mask],
+            y=S0[mask] * 100,
+            line=dict(shape="hv", color="#ef4444", width=2.5),
+            name="No mitotane",
+            mode="lines",
+            hovertemplate="No mitotane: %{y:.1f}%<extra></extra>"
+        ))
+        fig.add_trace(go.Scatter(
+            x=tg[mask],
+            y=S1[mask] * 100,
+            line=dict(shape="hv", color="#3b82f6", width=2.5),
+            name="Adj. mitotane",
+            mode="lines",
+            hovertemplate="Adj. mitotane: %{y:.1f}%<extra></extra>"
+        ))
+        
+        fig.update_layout(
+            xaxis_title="Months",
+            yaxis_title=f"{ep} probability (%)",
+            yaxis=dict(range=[0, 100], gridcolor="#f1f5f9", zeroline=False),
+            xaxis=dict(range=[0, hz], gridcolor="#f1f5f9", zeroline=False),
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            margin=dict(l=40, r=10, t=10, b=40),
+            legend=dict(
+                orientation="h",
+                yanchor="top",
+                y=-0.25,
+                xanchor="center",
+                x=0.5,
+                font=dict(size=11)
+            ),
+            hovermode="x unified",
+            height=300
+        )
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    # PFS Content
+    with tab_pfs:
+        ep, hz = "PFS", horizon_pfs
+        yr_lbl = hz // 12
+        lbl = f"{yr_lbl}-year Progression-free survival"
+        st.markdown(f"<div style='font-size: 1.15rem; font-weight: 600; color: #0f172a; margin: 12px 0;'>{lbl}</div>", unsafe_allow_html=True)
+        
+        s0 = surv_at(ep, hz, 0, **kw); s1 = surv_at(ep, hz, 1, **kw)
+        rec = CATE_CI[f"{age}-{sympt}-{ensat}-{rstatus}-{ki67}"][f"{ep}{hz}"]
+        c_pt, c_lo, c_hi = rec["cate"], rec["lo"], rec["hi"]
+        nnt, nnt_lo, nnt_hi = rec["nnt"], rec.get("nnt_lo"), rec.get("nnt_hi")
+        yr = hz // 12
+        
+        # Responsive metrics
+        st.markdown(
+            f"<div class='metric-container'>"
+            f"  <div class='metric-card' style='border-left: 4px solid #ef4444;'>"
+            f"    <div style='font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;'>{ep} without mitotane</div>"
+            f"    <div style='font-size: 26px; font-weight: 700; color: #0f172a; margin-top: 4px;'>{s0*100:.1f}%</div>"
+            f"  </div>"
+            f"  <div class='metric-card' style='border-left: 4px solid #3b82f6;'>"
+            f"    <div style='font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;'>{ep} with mitotane</div>"
+            f"    <div style='font-size: 26px; font-weight: 700; color: #0f172a; margin-top: 4px;'>{s1*100:.1f}%</div>"
+            f"  </div>"
+            f"</div>",
+            unsafe_allow_html=True
+        )
+        
+        nnt_ci = (f"{nnt_lo}–{nnt_hi}" if nnt_lo and nnt_hi else "—")
+        outcome = "survivor" if ep == "OS" else "progression-free patient"
+        tip = (f"One additional {yr}-year {outcome} is expected for every {nnt} patients "
+               f"treated with adjuvant mitotane. NNT = 1 / absolute benefit; the 95% CI is "
+               f"obtained by inverting the bounds of the absolute-benefit CI (Altman 1998). "
+               f"Confidence intervals are from a 1000-replicate bootstrap of the "
+               f"doubly-robust IPTW Cox model.")
+        
+        st.markdown(
+            f"<div class='nnt-card'>"
+            f"  <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; flex-wrap: wrap; gap: 6px;'>"
+            f"    <span style='font-size: 12px; font-weight: 500; color: #475569;'>Number needed to treat ({yr}-year {ep})</span>"
+            f"    <span title=\"{tip}\" style='cursor:help;color:#94a3b8;font-size:14px;'>&#9432;</span>"
+            f"  </div>"
+            f"  <div style='display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px; flex-wrap: wrap;'>"
+            f"    <span style='font-size: 34px; font-weight: 700; color: #1e3a8a; line-height: 1;'>{nnt}</span>"
+            f"    <span style='font-size: 14px; font-weight: 500; color: #1e40af;'>(95% CI {nnt_ci})</span>"
+            f"  </div>"
+            f"  <div style='font-size: 12px; color: #475569; margin-top: 4px;'>"
+            f"    Absolute {ep} benefit <b>{c_pt:+.1f}%</b> (95% CI {c_lo:+.1f} to {c_hi:+.1f} pp)"
+            f"  </div>"
+            f"</div>",
+            unsafe_allow_html=True
+        )
+        
+        # Interactive Plotly Step Chart
+        tg, S0 = surv_curve(ep, 0, **kw); _, S1 = surv_curve(ep, 1, **kw)
+        mask = tg <= hz
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=tg[mask],
+            y=S0[mask] * 100,
+            line=dict(shape="hv", color="#ef4444", width=2.5),
+            name="No mitotane",
+            mode="lines",
+            hovertemplate="No mitotane: %{y:.1f}%<extra></extra>"
+        ))
+        fig.add_trace(go.Scatter(
+            x=tg[mask],
+            y=S1[mask] * 100,
+            line=dict(shape="hv", color="#3b82f6", width=2.5),
+            name="Adj. mitotane",
+            mode="lines",
+            hovertemplate="Adj. mitotane: %{y:.1f}%<extra></extra>"
+        ))
+        
+        fig.update_layout(
+            xaxis_title="Months",
+            yaxis_title=f"{ep} probability (%)",
+            yaxis=dict(range=[0, 100], gridcolor="#f1f5f9", zeroline=False),
+            xaxis=dict(range=[0, hz], gridcolor="#f1f5f9", zeroline=False),
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            margin=dict(l=40, r=10, t=10, b=40),
+            legend=dict(
+                orientation="h",
+                yanchor="top",
+                y=-0.25,
+                xanchor="center",
+                x=0.5,
+                font=dict(size=11)
+            ),
+            hovermode="x unified",
+            height=300
+        )
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
 hr = P["meta"]["HR"]
 st.divider()
