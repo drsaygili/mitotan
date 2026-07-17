@@ -94,25 +94,26 @@ def render_sgras_badge(score, grp):
         else:
             block_style = f"background-color: {block_bg}; border: 1px solid rgba(0,0,0,0.05); font-weight: 400; opacity: 0.85;"
             
-        scale_html += f"<div style='width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 14px; color: #1f2937; {block_style}'>{i}</div>"
+        scale_html += f"<div style='width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 13px; color: #1f2937; {block_style}'>{i}</div>"
         
-    # Build the main card HTML
+    # Build the main card HTML (Short, Rectangular and Compact!)
     html = f"""
-    <div style='display: flex; flex-direction: column; align-items: center; margin: 10px 0 24px 0;'>
-        <div style='border: 2px solid {border_color}; background-color: {bg_color}; border-radius: 14px; width: 320px; padding: 20px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);'>
-            <div style='display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;'>
-                <span style='font-size: 24px;'>{circle_emoji}</span>
-                <span style='font-size: 22px; font-weight: 600; color: {text_color};'>S-GRAS Score:</span>
+    <div style='display: flex; flex-direction: column; align-items: center; margin: 4px 0 12px 0;'>
+        <div style='border: 1.5px solid {border_color}; background-color: {bg_color}; border-radius: 10px; width: 340px; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);'>
+            <div style='display: flex; align-items: center; gap: 8px;'>
+                <span style='font-size: 20px; line-height: 1;'>{circle_emoji}</span>
+                <span style='font-size: 15px; font-weight: 600; color: {text_color};'>S-GRAS Score:</span>
+                <span style='font-size: 22px; font-weight: 800; color: {text_color}; line-height: 1;'>{score}</span>
             </div>
-            <div style='font-size: 42px; font-weight: 800; color: {text_color}; margin: 8px 0; line-height: 1;'>{score}</div>
-            <div style='font-size: 18px; font-weight: 700; color: {text_color}; letter-spacing: 0.05em; margin-top: 12px;'>{risk_label}</div>
+            <div style='font-size: 13px; font-weight: 700; color: {text_color}; letter-spacing: 0.03em;'>{risk_label}</div>
         </div>
-        <div style='display: flex; justify-content: center; gap: 5px; margin-top: 14px; width: 100%; max-width: 380px;'>
+        <div style='display: flex; justify-content: center; gap: 4px; margin-top: 10px; width: 100%; max-width: 380px;'>
             {scale_html}
         </div>
     </div>
     """
     return html
+
 
 
 # ---------- UI & Styling ----------
