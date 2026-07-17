@@ -19,6 +19,9 @@ P = json.load(open(os.path.join(HERE, "cox_calculator_params.json")))
 # absolute survival because both curves share the same baseline hazard and
 # covariate coefficients, differing only in the treatment term.
 CATE_CI = json.load(open(os.path.join(HERE, "cox_cate_ci.json")))
+# Pointwise 95% CI for each arm's absolute survival, from the Cox model's own
+# survfit() with the complementary log-log transform and robust (IPTW) variance.
+ARM_CI = json.load(open(os.path.join(HERE, "cox_arm_ci.json")))
 
 
 def cate_ci(age, sympt, ensat, rstatus, ki67, hz_key):
@@ -361,16 +364,24 @@ def render_endpoint_results(ep, hz, kw):
         nnt, nnt_lo, nnt_hi = rec["nnt"], rec.get("nnt_lo"), rec.get("nnt_hi")
         yr = hz // 12
         
+        # Pointwise 95% CI for each arm's absolute survival
+        arm = ARM_CI[f"{kw['age']}-{kw['sympt']}-{kw['ensat']}-{kw['rstatus']}-{kw['ki67']}"][f"{ep}{hz}"]
+        arm_tip = ("Pointwise 95% confidence interval for the absolute survival "
+                   "probability, derived from the Cox model's survfit() using the "
+                   "complementary log-log transform and robust (IPTW) variance.")
+        
         # Responsive metrics
         st.markdown(
             f"<div class='metric-container'>"
-            f"  <div class='metric-card' style='border-left: 4px solid #ef4444;'>"
+            f"  <div class='metric-card' style='border-left: 4px solid #ef4444;' title='{arm_tip}'>"
             f"    <div style='font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;'>{ep} without mitotane</div>"
             f"    <div style='font-size: 26px; font-weight: 700; color: #0f172a; margin-top: 4px;'>{s0*100:.1f}%</div>"
+            f"    <div style='font-size: 11px; color: #64748b; margin-top: 2px;'>95% CI {arm['s0_lo']:.1f}%–{arm['s0_hi']:.1f}%</div>"
             f"  </div>"
-            f"  <div class='metric-card' style='border-left: 4px solid #3b82f6;'>"
+            f"  <div class='metric-card' style='border-left: 4px solid #3b82f6;' title='{arm_tip}'>"
             f"    <div style='font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;'>{ep} with mitotane</div>"
             f"    <div style='font-size: 26px; font-weight: 700; color: #0f172a; margin-top: 4px;'>{s1*100:.1f}%</div>"
+            f"    <div style='font-size: 11px; color: #64748b; margin-top: 2px;'>95% CI {arm['s1_lo']:.1f}%–{arm['s1_hi']:.1f}%</div>"
             f"  </div>"
             f"</div>",
             unsafe_allow_html=True
