@@ -164,7 +164,7 @@ st.markdown(
 st.markdown(
     """
     <div class="main-title">Adjuvant Mitotane Benefit Calculator — Adrenocortical Carcinoma</div>
-    <div class="main-caption">Doubly-Robust IPTW Cox model · development n=755, external validation n=97 · scope: ENSAT I–III, R0/RX/R1</div>
+    <div class="main-caption">Doubly-Robust IPTW Cox model · development n=755, external validation n=97 · scope: ENSAT I–III, R0/RX/R1, age ≥18 y</div>
     """,
     unsafe_allow_html=True
 )
