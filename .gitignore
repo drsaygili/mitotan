@@ -1,0 +1,10 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data files (Exclude Excel files and CSVs to prevent uploading sensitive data)
+*.xlsx
+*.xls
+*.csv
+.DS_Store
