@@ -124,11 +124,18 @@ st.markdown(
     .risk-high { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
     .risk-very-high { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
     
-    /* Make standard Streamlit widgets look cleaner */
+    /* Make standard Streamlit widgets look cleaner and more compact */
+    div[data-testid="stRadio"] {
+        margin-bottom: 12px !important;
+    }
     div[data-testid="stRadio"] > label {
-        font-weight: 500 !important;
-        color: #334155 !important;
-        margin-bottom: 6px !important;
+        font-weight: 600 !important;
+        font-size: 0.85rem !important;
+        color: #475569 !important;
+        margin-bottom: 4px !important;
+    }
+    div[data-testid="stRadio"] div[role="radiogroup"] {
+        gap: 12px !important;
     }
     
     /* Custom spacing for tabs */
@@ -168,12 +175,21 @@ with col_in:
     with st.container(border=True):
         st.markdown('<div style="font-size: 1.15rem; font-weight: 600; color: #0f172a; margin-bottom: 16px;">Patient S-GRAS components</div>', unsafe_allow_html=True)
         
-        age = st.radio("Age", [0, 1], format_func=lambda x: "<50 y" if x == 0 else "≥50 y", horizontal=True)
-        sympt = st.radio("Symptoms at diagnosis", [0, 1],
-                         format_func=lambda x: "Absent" if x == 0 else "Present", horizontal=True)
-        ensat = st.radio("ENSAT stage", [0, 1], format_func=lambda x: "I–II" if x == 0 else "III", horizontal=True)
-        rstatus = st.radio("Resection status", [0, 1, 2],
-                           format_func=lambda x: {0: "R0", 1: "RX", 2: "R1"}[x], horizontal=True)
+        # Grid layout for inputs to make it highly compact
+        c1, c2 = st.columns(2)
+        with c1:
+            age = st.radio("Age", [0, 1], format_func=lambda x: "<50 y" if x == 0 else "≥50 y", horizontal=True)
+        with c2:
+            sympt = st.radio("Symptoms at diagnosis", [0, 1],
+                             format_func=lambda x: "Absent" if x == 0 else "Present", horizontal=True)
+                             
+        c3, c4 = st.columns(2)
+        with c3:
+            ensat = st.radio("ENSAT stage", [0, 1], format_func=lambda x: "I–II" if x == 0 else "III", horizontal=True)
+        with c4:
+            rstatus = st.radio("Resection status", [0, 1, 2],
+                               format_func=lambda x: {0: "R0", 1: "RX", 2: "R1"}[x], horizontal=True)
+                               
         ki67 = st.radio("Ki-67 index", [0, 1, 2],
                         format_func=lambda x: {0: "<10%", 1: "10–19%", 2: "≥20%"}[x], horizontal=True)
 
