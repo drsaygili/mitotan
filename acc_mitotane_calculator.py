@@ -278,35 +278,35 @@ with st.expander("Patient Characteristics & Tumor Parameters", expanded=True):
             "Age at initial diagnosis",
             [0, 1],
             format_func=lambda x: "<50 years" if x == 0 else "≥50 years",
-            help="Patient age at the time of diagnosis (<50 years vs ≥50 years)."
+            help="Patient chronological age at the time of adrenocortical carcinoma diagnosis"
         )
     with c2:
         sympt = st.radio(
             "Clinical presentation",
             [0, 1],
             format_func=lambda x: "Asymptomatic" if x == 0 else "Symptomatic",
-            help="Presence of symptoms at the time of diagnosis (Asymptomatic vs Symptomatic)."
+            help="Presence of hormone-related, tumor-related, or systemic manifestations at initial presentation"
         )
     with c3:
         ensat = st.selectbox(
             "ENSAT Tumor Stage",
             [0, 1],
             format_func=lambda x: "Stage I-II" if x == 0 else "Stage III",
-            help="European Network for the Study of Adrenal Tumors (ENSAT) tumor stage."
+            help="European Network for the Study of Adrenal Tumors staging classification system"
         )
     with c4:
         rstatus = st.selectbox(
             "Surgical resection status",
             [0, 1, 2],
             format_func=lambda x: {0: "R0", 1: "RX", 2: "R1"}[x],
-            help="Surgical margin status (R0: microscopically negative, RX: cannot be assessed, R1: microscopically positive)."
+            help="R0: No residual tumor; RX: Presence of residual tumor cannot be assessed; R1: Microscopic residual disease; R2: Macroscopic residual disease"
         )
     with c5:
         ki67 = st.selectbox(
             "Ki-67 proliferation index",
             [0, 1, 2],
             format_func=lambda x: {0: "0%-9%", 1: "10%-19%", 2: "≥20%"}[x],
-            help="Tumor proliferation index measured by immunohistochemistry."
+            help="Immunohistochemical proliferation marker representing the percentage of tumor cells in active phases of cell cycle"
         )
 
 kw = dict(age=age, sympt=sympt, ensat=ensat, rstatus=rstatus, ki67=ki67)
