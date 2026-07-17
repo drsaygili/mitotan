@@ -258,6 +258,35 @@ st.markdown(
         visibility: visible;
         opacity: 1;
     }
+
+    /* Hide Streamlit footer and host badge */
+    footer {
+        visibility: hidden !important;
+        height: 0px !important;
+        padding: 0px !important;
+    }
+    div[data-testid="stFooter"] {
+        display: none !important;
+    }
+    
+    /* Hide 'Hosted with Streamlit' red banner */
+    div[class*="viewerBadge"] {
+        display: none !important;
+    }
+    span[class*="viewerBadge"] {
+        display: none !important;
+    }
+    
+    /* Hide viewer profile icon / app toolbar at the bottom */
+    div[class*="StyledAppToolbar"] {
+        display: none !important;
+    }
+    div[data-testid="stViewerToolbar"] {
+        display: none !important;
+    }
+    div[class*="viewerToolbar"] {
+        display: none !important;
+    }
     </style>
     """,
     unsafe_allow_html=True
