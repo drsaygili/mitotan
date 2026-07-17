@@ -48,6 +48,72 @@ def sgras(age, sympt, ensat, rstatus, ki67):
     grp = ("Low" if s <= 1 else "Intermediate" if s <= 3 else "High" if s <= 5 else "Very high")
     return s, grp
 
+def render_sgras_badge(score, grp):
+    # Set colors based on group matching the visual specs in user screenshot
+    if grp == "Low":
+        circle_emoji = "🟢"
+        text_color = "#166534" # dark green
+        border_color = "#22c55e" # green-500
+        bg_color = "#e8f5e9" # soft green background
+        risk_label = "LOW RISK"
+    elif grp == "Intermediate":
+        circle_emoji = "🟡"
+        text_color = "#854d0e" # dark yellow
+        border_color = "#eab308" # yellow-500
+        bg_color = "#fefde8" # soft yellow background
+        risk_label = "INTERMEDIATE RISK"
+    elif grp == "High":
+        circle_emoji = "🟠"
+        text_color = "#9a3412" # dark orange
+        border_color = "#f97316" # orange-500
+        bg_color = "#fff7ed" # soft orange background
+        risk_label = "HIGH RISK"
+    else:
+        circle_emoji = "🔴"
+        text_color = "#991b1b" # dark red
+        border_color = "#ef4444" # red-500
+        bg_color = "#fef2f2" # soft red background
+        risk_label = "VERY HIGH RISK"
+        
+    # Build the horizontal 0-9 scale HTML
+    scale_html = ""
+    for i in range(10):
+        # Determine background color for scale block
+        if i <= 1:
+            block_bg = "#a7f3d0" # green
+        elif i <= 3:
+            block_bg = "#fef08a" # yellow
+        elif i <= 5:
+            block_bg = "#fed7aa" # orange
+        else:
+            block_bg = "#fecaca" # red
+            
+        # Highlight the current score block with a thick black border
+        if i == score:
+            block_style = f"background-color: {block_bg}; border: 2px solid #000000; font-weight: 700; scale: 1.05;"
+        else:
+            block_style = f"background-color: {block_bg}; border: 1px solid rgba(0,0,0,0.05); font-weight: 400; opacity: 0.85;"
+            
+        scale_html += f"<div style='width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 14px; color: #1f2937; {block_style}'>{i}</div>"
+        
+    # Build the main card HTML
+    html = f"""
+    <div style='display: flex; flex-direction: column; align-items: center; margin: 10px 0 24px 0;'>
+        <div style='border: 2px solid {border_color}; background-color: {bg_color}; border-radius: 14px; width: 320px; padding: 20px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);'>
+            <div style='display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;'>
+                <span style='font-size: 24px;'>{circle_emoji}</span>
+                <span style='font-size: 22px; font-weight: 600; color: {text_color};'>S-GRAS Score:</span>
+            </div>
+            <div style='font-size: 42px; font-weight: 800; color: {text_color}; margin: 8px 0; line-height: 1;'>{score}</div>
+            <div style='font-size: 18px; font-weight: 700; color: {text_color}; letter-spacing: 0.05em; margin-top: 12px;'>{risk_label}</div>
+        </div>
+        <div style='display: flex; justify-content: center; gap: 5px; margin-top: 14px; width: 100%; max-width: 380px;'>
+            {scale_html}
+        </div>
+    </div>
+    """
+    return html
+
 
 # ---------- UI & Styling ----------
 st.set_page_config(page_title="ACC Mitotane Benefit Calculator", layout="wide")
@@ -114,22 +180,6 @@ st.markdown(
         box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         width: 100%;
     }
-    
-    /* Risk Badges */
-    .risk-badge {
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 15px;
-        display: inline-block;
-        margin-bottom: 16px;
-        width: 100%;
-        text-align: center;
-    }
-    .risk-low { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-    .risk-intermediate { background-color: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
-    .risk-high { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
-    .risk-very-high { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
     
     /* Make standard Streamlit widgets look cleaner and tighter */
     div[data-testid="stRadio"] {
@@ -366,22 +416,9 @@ def render_endpoint_results(ep, hz, kw):
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
 
-# S-GRAS Score Banner
-if grp == "Low":
-    badge_class = "risk-low"
-elif grp == "Intermediate":
-    badge_class = "risk-intermediate"
-elif grp == "High":
-    badge_class = "risk-high"
-else:
-    badge_class = "risk-very-high"
-    
-st.markdown(
-    f"<div class='risk-badge {badge_class}'>"
-    f"S-GRAS score: {score}/9 — {grp} risk group"
-    f"</div>",
-    unsafe_allow_html=True
-)
+# Header above the S-GRAS Risk Card
+st.markdown("<div style='font-size: 1.35rem; font-weight: 700; color: #0f172a; margin: 18px 0 10px 0;'>📊 S-GRAS Risk Stratification Assessment</div>", unsafe_allow_html=True)
+st.markdown(render_sgras_badge(score, grp), unsafe_allow_html=True)
 
 # 3 tabs for OS, 1-year PFS, 3-year PFS
 tab_os, tab_pfs1, tab_pfs3 = st.tabs([
