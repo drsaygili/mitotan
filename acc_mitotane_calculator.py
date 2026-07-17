@@ -275,14 +275,14 @@ st.markdown(
 with st.expander("Patient Characteristics & Tumor Parameters", expanded=True):
     c1, c2, c3, c4, c5 = st.columns(5)
     with c1:
-        age = st.radio(
+        age = st.selectbox(
             "Age at initial diagnosis",
             [0, 1],
             format_func=lambda x: "<50 years" if x == 0 else "≥50 years",
             help="Patient chronological age at the time of adrenocortical carcinoma diagnosis"
         )
     with c2:
-        sympt = st.radio(
+        sympt = st.selectbox(
             "Clinical presentation",
             [0, 1],
             format_func=lambda x: "Asymptomatic" if x == 0 else "Symptomatic",
