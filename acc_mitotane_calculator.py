@@ -156,6 +156,51 @@ st.markdown(
         background-color: #ffffff !important;
         font-weight: 600;
     }
+
+    /* Custom Tooltip Styling */
+    .custom-tooltip {
+        position: relative;
+        display: inline-block;
+        cursor: help;
+        color: #94a3b8;
+        font-size: 14px;
+    }
+    
+    .custom-tooltip .tooltip-text {
+        visibility: hidden;
+        width: 280px;
+        background-color: #1e293b;
+        color: #ffffff;
+        text-align: left;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 11px;
+        line-height: 1.4;
+        font-weight: 400;
+        
+        position: absolute;
+        z-index: 1000;
+        bottom: 125%;
+        right: 0px;
+        
+        opacity: 0;
+        transition: opacity 0.05s ease-in-out;
+    }
+    
+    .custom-tooltip .tooltip-text::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        right: 8px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: #1e293b transparent transparent transparent;
+    }
+    
+    .custom-tooltip:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -235,7 +280,7 @@ def render_endpoint_results(ep, hz, kw):
             f"<div class='nnt-card'>"
             f"  <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; flex-wrap: wrap; gap: 6px;'>"
             f"    <span style='font-size: 12px; font-weight: 500; color: #475569;'>Number needed to treat ({yr}-year {ep})</span>"
-            f"    <span title=\"{tip}\" style='cursor:help;color:#94a3b8;font-size:14px;'>&#9432;</span>"
+            f"    <div class='custom-tooltip'>&#9432;<span class='tooltip-text'>{tip}</span></div>"
             f"  </div>"
             f"  <div style='display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px; flex-wrap: wrap;'>"
             f"    <span style='font-size: 34px; font-weight: 700; color: #1e3a8a; line-height: 1;'>{nnt}</span>"
