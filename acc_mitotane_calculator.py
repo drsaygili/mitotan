@@ -63,14 +63,14 @@ st.markdown(
         font-family: 'Inter', sans-serif;
     }
     
-    /* Remove default Streamlit top padding and expand container */
+    /* Remove default Streamlit top padding and expand container safely below the top menu bar */
     .block-container {
-        padding-top: 1.2rem !important;
+        padding-top: 3.5rem !important;
         padding-bottom: 1.5rem !important;
         max-width: 95% !important;
     }
     
-    /* Title styling - Close to top */
+    /* Title styling */
     .main-title {
         font-size: 2.0rem;
         font-weight: 700;
@@ -131,18 +131,12 @@ st.markdown(
     .risk-high { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
     .risk-very-high { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
     
-    /* Make standard Streamlit widgets look cleaner and tighter */
-    div[data-testid="stRadio"] {
-        margin-bottom: 0px !important;
-    }
-    div[data-testid="stRadio"] > label {
+    /* Make standard Streamlit selectboxes look cleaner and tighter */
+    div[data-testid="stSelectbox"] label {
         font-weight: 600 !important;
         font-size: 0.82rem !important;
         color: #475569 !important;
         margin-bottom: 3px !important;
-    }
-    div[data-testid="stRadio"] div[role="radiogroup"] {
-        gap: 12px !important;
     }
     
     /* Custom spacing for tabs */
@@ -175,23 +169,22 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# S-GRAS components at the very top in a single row
-with st.container(border=True):
-    st.markdown('<div style="font-size: 1.05rem; font-weight: 600; color: #0f172a; margin-bottom: 8px;">Patient S-GRAS components</div>', unsafe_allow_html=True)
+# S-GRAS components inside a collapsible expander at the top
+with st.expander("Patient S-GRAS components", expanded=True):
     c1, c2, c3, c4, c5 = st.columns(5)
     with c1:
-        age = st.radio("Age", [0, 1], format_func=lambda x: "<50 y" if x == 0 else "≥50 y", horizontal=True)
+        age = st.selectbox("Age", [0, 1], format_func=lambda x: "<50 y" if x == 0 else "≥50 y")
     with c2:
-        sympt = st.radio("Symptoms at diagnosis", [0, 1],
-                         format_func=lambda x: "Absent" if x == 0 else "Present", horizontal=True)
+        sympt = st.selectbox("Symptoms at diagnosis", [0, 1],
+                             format_func=lambda x: "Absent" if x == 0 else "Present")
     with c3:
-        ensat = st.radio("ENSAT stage", [0, 1], format_func=lambda x: "I–II" if x == 0 else "III", horizontal=True)
+        ensat = st.selectbox("ENSAT stage", [0, 1], format_func=lambda x: "I–II" if x == 0 else "III")
     with c4:
-        rstatus = st.radio("Resection status", [0, 1, 2],
-                           format_func=lambda x: {0: "R0", 1: "RX", 2: "R1"}[x], horizontal=True)
+        rstatus = st.selectbox("Resection status", [0, 1, 2],
+                               format_func=lambda x: {0: "R0", 1: "RX", 2: "R1"}[x])
     with c5:
-        ki67 = st.radio("Ki-67 index", [0, 1, 2],
-                        format_func=lambda x: {0: "<10%", 1: "10–19%", 2: "≥20%"}[x], horizontal=True)
+        ki67 = st.selectbox("Ki-67 index", [0, 1, 2],
+                            format_func=lambda x: {0: "<10%", 1: "10–19%", 2: "≥20%"}[x])
 
 kw = dict(age=age, sympt=sympt, ensat=ensat, rstatus=rstatus, ki67=ki67)
 score, grp = sgras(age, sympt, ensat, rstatus, ki67)
