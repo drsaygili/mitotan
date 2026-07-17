@@ -131,12 +131,18 @@ st.markdown(
     .risk-high { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
     .risk-very-high { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
     
-    /* Make standard Streamlit selectboxes look cleaner and tighter */
-    div[data-testid="stSelectbox"] label {
+    /* Make standard Streamlit widgets look cleaner and tighter */
+    div[data-testid="stRadio"] {
+        margin-bottom: 0px !important;
+    }
+    div[data-testid="stRadio"] > label, div[data-testid="stSelectbox"] label {
         font-weight: 600 !important;
         font-size: 0.82rem !important;
         color: #475569 !important;
-        margin-bottom: 3px !important;
+        margin-bottom: 4px !important;
+    }
+    div[data-testid="stRadio"] div[role="radiogroup"] {
+        gap: 8px !important;
     }
     
     /* Custom spacing for tabs */
@@ -156,7 +162,7 @@ st.markdown(
         background-color: #ffffff !important;
         font-weight: 600;
     }
-
+    
     /* Custom Tooltip Styling */
     .custom-tooltip {
         position: relative;
@@ -214,22 +220,44 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# S-GRAS components inside a collapsible expander at the top
-with st.expander("Patient S-GRAS components", expanded=True):
+# S-GRAS components inside a collapsible expander at the top in a single row
+with st.expander("Patient Characteristics & Tumor Parameters", expanded=True):
     c1, c2, c3, c4, c5 = st.columns(5)
     with c1:
-        age = st.selectbox("Age", [0, 1], format_func=lambda x: "<50 y" if x == 0 else "≥50 y")
+        age = st.radio(
+            "Age at initial diagnosis",
+            [0, 1],
+            format_func=lambda x: "<50 years" if x == 0 else "≥50 years",
+            help="Patient age at the time of diagnosis (<50 years vs ≥50 years)."
+        )
     with c2:
-        sympt = st.selectbox("Symptoms at diagnosis", [0, 1],
-                             format_func=lambda x: "Absent" if x == 0 else "Present")
+        sympt = st.radio(
+            "Clinical presentation",
+            [0, 1],
+            format_func=lambda x: "Asymptomatic" if x == 0 else "Symptomatic",
+            help="Presence of symptoms at the time of diagnosis (Asymptomatic vs Symptomatic)."
+        )
     with c3:
-        ensat = st.selectbox("ENSAT stage", [0, 1], format_func=lambda x: "I–II" if x == 0 else "III")
+        ensat = st.selectbox(
+            "ENSAT Tumor Stage",
+            [0, 1],
+            format_func=lambda x: "Stage I-II" if x == 0 else "Stage III",
+            help="European Network for the Study of Adrenal Tumors (ENSAT) tumor stage."
+        )
     with c4:
-        rstatus = st.selectbox("Resection status", [0, 1, 2],
-                               format_func=lambda x: {0: "R0", 1: "RX", 2: "R1"}[x])
+        rstatus = st.selectbox(
+            "Surgical resection status",
+            [0, 1, 2],
+            format_func=lambda x: {0: "R0", 1: "RX", 2: "R1"}[x],
+            help="Surgical margin status (R0: microscopically negative, RX: cannot be assessed, R1: microscopically positive)."
+        )
     with c5:
-        ki67 = st.selectbox("Ki-67 index", [0, 1, 2],
-                            format_func=lambda x: {0: "<10%", 1: "10–19%", 2: "≥20%"}[x])
+        ki67 = st.selectbox(
+            "Ki-67 proliferation index",
+            [0, 1, 2],
+            format_func=lambda x: {0: "0%-9%", 1: "10%-19%", 2: "≥20%"}[x],
+            help="Tumor proliferation index measured by immunohistochemistry."
+        )
 
 kw = dict(age=age, sympt=sympt, ensat=ensat, rstatus=rstatus, ki67=ki67)
 score, grp = sgras(age, sympt, ensat, rstatus, ki67)
