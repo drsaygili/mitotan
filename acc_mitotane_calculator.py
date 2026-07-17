@@ -52,7 +52,7 @@ def sgras(age, sympt, ensat, rstatus, ki67):
 # ---------- UI & Styling ----------
 st.set_page_config(page_title="ACC Mitotane Benefit Calculator", layout="wide")
 
-# Custom CSS for Premium & Responsive Design
+# Custom CSS for Premium, Ultra-Compact & Responsive Design
 st.markdown(
     """
     <style>
@@ -63,20 +63,27 @@ st.markdown(
         font-family: 'Inter', sans-serif;
     }
     
-    /* Title styling */
+    /* Remove default Streamlit top padding and expand container */
+    .block-container {
+        padding-top: 1.2rem !important;
+        padding-bottom: 1.5rem !important;
+        max-width: 95% !important;
+    }
+    
+    /* Title styling - Close to top */
     .main-title {
-        font-size: 2.1rem;
+        font-size: 2.0rem;
         font-weight: 700;
         color: #0f172a;
         letter-spacing: -0.025em;
-        margin-bottom: 4px;
-        line-height: 1.2;
+        margin-bottom: 2px;
+        line-height: 1.1;
     }
     
     .main-caption {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         color: #64748b;
-        margin-bottom: 24px;
+        margin-bottom: 14px;
     }
     
     /* Custom metric card - Fully Responsive Flexbox */
@@ -93,8 +100,8 @@ st.markdown(
         border-radius: 10px;
         padding: 14px 18px;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-        flex: 1 1 180px; /* Grows and wraps beautifully down to 180px */
-        min-width: 160px;
+        flex: 1 1 180px;
+        min-width: 150px;
     }
     
     /* NNT Card Styling */
@@ -110,12 +117,12 @@ st.markdown(
     
     /* Risk Badges */
     .risk-badge {
-        padding: 10px 16px;
+        padding: 8px 16px;
         border-radius: 8px;
         font-weight: 600;
         font-size: 15px;
         display: inline-block;
-        margin-bottom: 20px;
+        margin-bottom: 16px;
         width: 100%;
         text-align: center;
     }
@@ -124,15 +131,15 @@ st.markdown(
     .risk-high { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
     .risk-very-high { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
     
-    /* Make standard Streamlit widgets look cleaner and more compact */
+    /* Make standard Streamlit widgets look cleaner and tighter */
     div[data-testid="stRadio"] {
-        margin-bottom: 12px !important;
+        margin-bottom: 0px !important;
     }
     div[data-testid="stRadio"] > label {
         font-weight: 600 !important;
-        font-size: 0.85rem !important;
+        font-size: 0.82rem !important;
         color: #475569 !important;
-        margin-bottom: 4px !important;
+        margin-bottom: 3px !important;
     }
     div[data-testid="stRadio"] div[role="radiogroup"] {
         gap: 12px !important;
@@ -143,11 +150,11 @@ st.markdown(
         gap: 8px;
     }
     .stTabs [data-baseweb="tab"] {
-        height: 45px;
+        height: 42px;
         white-space: pre-wrap;
         background-color: #f8fafc;
         border-radius: 8px 8px 0 0;
-        padding: 10px 16px;
+        padding: 8px 16px;
         border: 1px solid #e2e8f0;
         border-bottom: none;
     }
@@ -168,28 +175,21 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Setup layout columns
-col_in, col_out = st.columns([1, 1.35], gap="large")
-
-with col_in:
-    with st.container(border=True):
-        st.markdown('<div style="font-size: 1.15rem; font-weight: 600; color: #0f172a; margin-bottom: 16px;">Patient S-GRAS components</div>', unsafe_allow_html=True)
-        
-        # Grid layout for inputs to make it highly compact
-        c1, c2 = st.columns(2)
-        with c1:
-            age = st.radio("Age", [0, 1], format_func=lambda x: "<50 y" if x == 0 else "≥50 y", horizontal=True)
-        with c2:
-            sympt = st.radio("Symptoms at diagnosis", [0, 1],
-                             format_func=lambda x: "Absent" if x == 0 else "Present", horizontal=True)
-                             
-        c3, c4 = st.columns(2)
-        with c3:
-            ensat = st.radio("ENSAT stage", [0, 1], format_func=lambda x: "I–II" if x == 0 else "III", horizontal=True)
-        with c4:
-            rstatus = st.radio("Resection status", [0, 1, 2],
-                               format_func=lambda x: {0: "R0", 1: "RX", 2: "R1"}[x], horizontal=True)
-                               
+# S-GRAS components at the very top in a single row
+with st.container(border=True):
+    st.markdown('<div style="font-size: 1.05rem; font-weight: 600; color: #0f172a; margin-bottom: 8px;">Patient S-GRAS components</div>', unsafe_allow_html=True)
+    c1, c2, c3, c4, c5 = st.columns(5)
+    with c1:
+        age = st.radio("Age", [0, 1], format_func=lambda x: "<50 y" if x == 0 else "≥50 y", horizontal=True)
+    with c2:
+        sympt = st.radio("Symptoms at diagnosis", [0, 1],
+                         format_func=lambda x: "Absent" if x == 0 else "Present", horizontal=True)
+    with c3:
+        ensat = st.radio("ENSAT stage", [0, 1], format_func=lambda x: "I–II" if x == 0 else "III", horizontal=True)
+    with c4:
+        rstatus = st.radio("Resection status", [0, 1, 2],
+                           format_func=lambda x: {0: "R0", 1: "RX", 2: "R1"}[x], horizontal=True)
+    with c5:
         ki67 = st.radio("Ki-67 index", [0, 1, 2],
                         format_func=lambda x: {0: "<10%", 1: "10–19%", 2: "≥20%"}[x], horizontal=True)
 
@@ -204,131 +204,134 @@ def render_endpoint_results(ep, hz, kw):
     else:
         lbl = f"{yr_lbl}-year Progression-free survival"
         
-    st.markdown(f"<div style='font-size: 1.15rem; font-weight: 600; color: #0f172a; margin: 12px 0;'>{lbl}</div>", unsafe_allow_html=True)
+    col_left, col_right = st.columns([1, 1.3], gap="large")
     
-    s0 = surv_at(ep, hz, 0, **kw); s1 = surv_at(ep, hz, 1, **kw)
-    rec = CATE_CI[f"{kw['age']}-{kw['sympt']}-{kw['ensat']}-{kw['rstatus']}-{kw['ki67']}"][f"{ep}{hz}"]
-    c_pt, c_lo, c_hi = rec["cate"], rec["lo"], rec["hi"]
-    nnt, nnt_lo, nnt_hi = rec["nnt"], rec.get("nnt_lo"), rec.get("nnt_hi")
-    yr = hz // 12
-    
-    # Responsive metrics
-    st.markdown(
-        f"<div class='metric-container'>"
-        f"  <div class='metric-card' style='border-left: 4px solid #ef4444;'>"
-        f"    <div style='font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;'>{ep} without mitotane</div>"
-        f"    <div style='font-size: 26px; font-weight: 700; color: #0f172a; margin-top: 4px;'>{s0*100:.1f}%</div>"
-        f"  </div>"
-        f"  <div class='metric-card' style='border-left: 4px solid #3b82f6;'>"
-        f"    <div style='font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;'>{ep} with mitotane</div>"
-        f"    <div style='font-size: 26px; font-weight: 700; color: #0f172a; margin-top: 4px;'>{s1*100:.1f}%</div>"
-        f"  </div>"
-        f"</div>",
-        unsafe_allow_html=True
-    )
-    
-    nnt_ci = (f"{nnt_lo}–{nnt_hi}" if nnt_lo and nnt_hi else "—")
-    outcome = "survivor" if ep == "OS" else "progression-free patient"
-    tip = (f"One additional {yr}-year {outcome} is expected for every {nnt} patients "
-           f"treated with adjuvant mitotane. NNT = 1 / absolute benefit; the 95% CI is "
-           f"obtained by inverting the bounds of the absolute-benefit CI (Altman 1998). "
-           f"Confidence intervals are from a 1000-replicate bootstrap of the "
-           f"doubly-robust IPTW Cox model.")
-    
-    st.markdown(
-        f"<div class='nnt-card'>"
-        f"  <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; flex-wrap: wrap; gap: 6px;'>"
-        f"    <span style='font-size: 12px; font-weight: 500; color: #475569;'>Number needed to treat ({yr}-year {ep})</span>"
-        f"    <span title=\"{tip}\" style='cursor:help;color:#94a3b8;font-size:14px;'>&#9432;</span>"
-        f"  </div>"
-        f"  <div style='display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px; flex-wrap: wrap;'>"
-        f"    <span style='font-size: 34px; font-weight: 700; color: #1e3a8a; line-height: 1;'>{nnt}</span>"
-        f"    <span style='font-size: 14px; font-weight: 500; color: #1e40af;'>(95% CI {nnt_ci})</span>"
-        f"  </div>"
-        f"  <div style='font-size: 12px; color: #475569; margin-top: 4px;'>"
-        f"    Absolute {ep} benefit <b>{c_pt:+.1f}%</b> (95% CI {c_lo:+.1f} to {c_hi:+.1f} pp)"
-        f"  </div>"
-        f"</div>",
-        unsafe_allow_html=True
-    )
-    
-    # Interactive Plotly Step Chart
-    tg, S0 = surv_curve(ep, 0, **kw); _, S1 = surv_curve(ep, 1, **kw)
-    mask = tg <= hz
-    
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=tg[mask],
-        y=S0[mask] * 100,
-        line=dict(shape="hv", color="#ef4444", width=2.5),
-        name="No mitotane",
-        mode="lines",
-        hovertemplate="No mitotane: %{y:.1f}%<extra></extra>"
-    ))
-    fig.add_trace(go.Scatter(
-        x=tg[mask],
-        y=S1[mask] * 100,
-        line=dict(shape="hv", color="#3b82f6", width=2.5),
-        name="Adj. mitotane",
-        mode="lines",
-        hovertemplate="Adj. mitotane: %{y:.1f}%<extra></extra>"
-    ))
-    
-    fig.update_layout(
-        xaxis_title="Months",
-        yaxis_title=f"{ep} probability (%)",
-        yaxis=dict(range=[0, 100], gridcolor="#f1f5f9", zeroline=False),
-        xaxis=dict(range=[0, hz], gridcolor="#f1f5f9", zeroline=False),
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
-        margin=dict(l=40, r=10, t=10, b=40),
-        legend=dict(
-            orientation="h",
-            yanchor="top",
-            y=-0.25,
-            xanchor="center",
-            x=0.5,
-            font=dict(size=11)
-        ),
-        hovermode="x unified",
-        height=300
-    )
-    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+    with col_left:
+        st.markdown(f"<div style='font-size: 1.15rem; font-weight: 600; color: #0f172a; margin: 12px 0 16px 0;'>{lbl}</div>", unsafe_allow_html=True)
+        
+        s0 = surv_at(ep, hz, 0, **kw); s1 = surv_at(ep, hz, 1, **kw)
+        rec = CATE_CI[f"{kw['age']}-{kw['sympt']}-{kw['ensat']}-{kw['rstatus']}-{kw['ki67']}"][f"{ep}{hz}"]
+        c_pt, c_lo, c_hi = rec["cate"], rec["lo"], rec["hi"]
+        nnt, nnt_lo, nnt_hi = rec["nnt"], rec.get("nnt_lo"), rec.get("nnt_hi")
+        yr = hz // 12
+        
+        # Responsive metrics
+        st.markdown(
+            f"<div class='metric-container'>"
+            f"  <div class='metric-card' style='border-left: 4px solid #ef4444;'>"
+            f"    <div style='font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;'>{ep} without mitotane</div>"
+            f"    <div style='font-size: 26px; font-weight: 700; color: #0f172a; margin-top: 4px;'>{s0*100:.1f}%</div>"
+            f"  </div>"
+            f"  <div class='metric-card' style='border-left: 4px solid #3b82f6;'>"
+            f"    <div style='font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;'>{ep} with mitotane</div>"
+            f"    <div style='font-size: 26px; font-weight: 700; color: #0f172a; margin-top: 4px;'>{s1*100:.1f}%</div>"
+            f"  </div>"
+            f"</div>",
+            unsafe_allow_html=True
+        )
+        
+        nnt_ci = (f"{nnt_lo}–{nnt_hi}" if nnt_lo and nnt_hi else "—")
+        outcome = "survivor" if ep == "OS" else "progression-free patient"
+        tip = (f"One additional {yr}-year {outcome} is expected for every {nnt} patients "
+               f"treated with adjuvant mitotane. NNT = 1 / absolute benefit; the 95% CI is "
+               f"obtained by inverting the bounds of the absolute-benefit CI (Altman 1998). "
+               f"Confidence intervals are from a 1000-replicate bootstrap of the "
+               f"doubly-robust IPTW Cox model.")
+        
+        st.markdown(
+            f"<div class='nnt-card'>"
+            f"  <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; flex-wrap: wrap; gap: 6px;'>"
+            f"    <span style='font-size: 12px; font-weight: 500; color: #475569;'>Number needed to treat ({yr}-year {ep})</span>"
+            f"    <span title=\"{tip}\" style='cursor:help;color:#94a3b8;font-size:14px;'>&#9432;</span>"
+            f"  </div>"
+            f"  <div style='display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px; flex-wrap: wrap;'>"
+            f"    <span style='font-size: 34px; font-weight: 700; color: #1e3a8a; line-height: 1;'>{nnt}</span>"
+            f"    <span style='font-size: 14px; font-weight: 500; color: #1e40af;'>(95% CI {nnt_ci})</span>"
+            f"  </div>"
+            f"  <div style='font-size: 12px; color: #475569; margin-top: 4px;'>"
+            f"    Absolute {ep} benefit <b>{c_pt:+.1f}%</b> (95% CI {c_lo:+.1f} to {c_hi:+.1f} pp)"
+            f"  </div>"
+            f"</div>",
+            unsafe_allow_html=True
+        )
+        
+    with col_right:
+        # Interactive Plotly Step Chart
+        tg, S0 = surv_curve(ep, 0, **kw); _, S1 = surv_curve(ep, 1, **kw)
+        mask = tg <= hz
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=tg[mask],
+            y=S0[mask] * 100,
+            line=dict(shape="hv", color="#ef4444", width=2.5),
+            name="No mitotane",
+            mode="lines",
+            hovertemplate="No mitotane: %{y:.1f}%<extra></extra>"
+        ))
+        fig.add_trace(go.Scatter(
+            x=tg[mask],
+            y=S1[mask] * 100,
+            line=dict(shape="hv", color="#3b82f6", width=2.5),
+            name="Adj. mitotane",
+            mode="lines",
+            hovertemplate="Adj. mitotane: %{y:.1f}%<extra></extra>"
+        ))
+        
+        fig.update_layout(
+            xaxis_title="Months",
+            yaxis_title=f"{ep} probability (%)",
+            yaxis=dict(range=[0, 100], gridcolor="#f1f5f9", zeroline=False),
+            xaxis=dict(range=[0, hz], gridcolor="#f1f5f9", zeroline=False),
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            margin=dict(l=40, r=10, t=10, b=40),
+            legend=dict(
+                orientation="h",
+                yanchor="top",
+                y=-0.25,
+                xanchor="center",
+                x=0.5,
+                font=dict(size=11)
+            ),
+            hovermode="x unified",
+            height=300
+        )
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
 
-with col_out:
-    # S-GRAS Score Banner
-    if grp == "Low":
-        badge_class = "risk-low"
-    elif grp == "Intermediate":
-        badge_class = "risk-intermediate"
-    elif grp == "High":
-        badge_class = "risk-high"
-    else:
-        badge_class = "risk-very-high"
-        
-    st.markdown(
-        f"<div class='risk-badge {badge_class}'>"
-        f"S-GRAS score: {score}/9 — {grp} risk group"
-        f"</div>",
-        unsafe_allow_html=True
-    )
+# S-GRAS Score Banner
+if grp == "Low":
+    badge_class = "risk-low"
+elif grp == "Intermediate":
+    badge_class = "risk-intermediate"
+elif grp == "High":
+    badge_class = "risk-high"
+else:
+    badge_class = "risk-very-high"
     
-    # 3 tabs for OS, 1-year PFS, 3-year PFS
-    tab_os, tab_pfs1, tab_pfs3 = st.tabs([
-        "5-year Overall Survival (OS)", 
-        "1-year Progression-Free Survival (PFS)", 
-        "3-year Progression-Free Survival (PFS)"
-    ])
+st.markdown(
+    f"<div class='risk-badge {badge_class}'>"
+    f"S-GRAS score: {score}/9 — {grp} risk group"
+    f"</div>",
+    unsafe_allow_html=True
+)
+
+# 3 tabs for OS, 1-year PFS, 3-year PFS
+tab_os, tab_pfs1, tab_pfs3 = st.tabs([
+    "5-year Overall Survival (OS)", 
+    "1-year Progression-Free Survival (PFS)", 
+    "3-year Progression-Free Survival (PFS)"
+])
+
+with tab_os:
+    render_endpoint_results("OS", 60, kw)
     
-    with tab_os:
-        render_endpoint_results("OS", 60, kw)
-        
-    with tab_pfs1:
-        render_endpoint_results("PFS", 12, kw)
-        
-    with tab_pfs3:
-        render_endpoint_results("PFS", 36, kw)
+with tab_pfs1:
+    render_endpoint_results("PFS", 12, kw)
+    
+with tab_pfs3:
+    render_endpoint_results("PFS", 36, kw)
 
 hr = P["meta"]["HR"]
 st.divider()
