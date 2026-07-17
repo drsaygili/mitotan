@@ -10,7 +10,7 @@ import json, os
 import numpy as np
 import pandas as pd
 import streamlit as st
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 P = json.load(open(os.path.join(HERE, "cox_calculator_params.json")))
@@ -25,6 +25,7 @@ def cate_ci(age, sympt, ensat, rstatus, ki67, hz_key):
     key = f"{age}-{sympt}-{ensat}-{rstatus}-{ki67}"
     b = CATE_CI[key][hz_key]
     return b["cate"], b["lo"], b["hi"]
+
 
 # ---------- Cox engine (pure Python, validated identical to R to 1e-8) ----------
 def _lp(ep, age, sympt, ensat, rstatus, ki67, mitotane):
@@ -47,79 +48,235 @@ def sgras(age, sympt, ensat, rstatus, ki67):
     grp = ("Low" if s <= 1 else "Intermediate" if s <= 3 else "High" if s <= 5 else "Very high")
     return s, grp
 
-# ---------- UI ----------
-st.set_page_config(page_title="ACC Mitotane Benefit Calculator", layout="wide")
-st.title("Adjuvant Mitotane Benefit Calculator — Adrenocortical Carcinoma")
-st.caption("Doubly-Robust IPTW Cox model · development n=755, external validation n=97 · "
-           "scope: ENSAT I–III, R0/RX/R1")
 
-with st.sidebar:
-    st.header("Patient S-GRAS components")
-    age = st.radio("Age", [0, 1], format_func=lambda x: "<50 y" if x == 0 else "≥50 y")
-    sympt = st.radio("Symptoms at diagnosis", [0, 1],
-                     format_func=lambda x: "Absent" if x == 0 else "Present")
-    ensat = st.radio("ENSAT stage", [0, 1], format_func=lambda x: "I–II" if x == 0 else "III")
-    rstatus = st.radio("Resection status", [0, 1, 2],
-                       format_func=lambda x: {0: "R0", 1: "RX", 2: "R1"}[x])
-    ki67 = st.radio("Ki-67 index", [0, 1, 2],
-                    format_func=lambda x: {0: "<10%", 1: "10–19%", 2: "≥20%"}[x])
-    horizon_os = 60  # OS fixed at 5-year (60-month) horizon
-    st.caption("OS horizon fixed at 60 months (5-year).")
-    horizon_pfs = st.radio("PFS horizon (months)", [12, 36], index=1,
-                           format_func=lambda x: f"{x} months ({x//12}-year)")
+# ---------- UI & Styling ----------
+st.set_page_config(page_title="ACC Mitotane Benefit Calculator", layout="wide")
+
+# Custom CSS for Premium Design
+st.markdown(
+    """
+    <style>
+    /* Google Font */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    html, body, [class*="css"], .stApp {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Title styling */
+    .main-title {
+        font-size: 2.1rem;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.025em;
+        margin-bottom: 4px;
+        line-height: 1.2;
+    }
+    
+    .main-caption {
+        font-size: 0.9rem;
+        color: #64748b;
+        margin-bottom: 24px;
+    }
+    
+    /* Custom metric card */
+    .metric-card {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px 16px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+        margin-bottom: 12px;
+    }
+    
+    /* NNT Card Styling */
+    .nnt-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin: 12px 0 16px 0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    
+    /* Risk Badges */
+    .risk-badge {
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 15px;
+        display: inline-block;
+        margin-bottom: 20px;
+        width: 100%;
+        text-align: center;
+    }
+    .risk-low { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .risk-intermediate { background-color: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+    .risk-high { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+    .risk-very-high { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    
+    /* Make standard Streamlit widgets look cleaner */
+    div[data-testid="stRadio"] > label {
+        font-weight: 500 !important;
+        color: #334155 !important;
+        margin-bottom: 6px !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    """
+    <div class="main-title">Adjuvant Mitotane Benefit Calculator — Adrenocortical Carcinoma</div>
+    <div class="main-caption">Doubly-Robust IPTW Cox model · development n=755, external validation n=97 · scope: ENSAT I–III, R0/RX/R1</div>
+    """,
+    unsafe_allow_html=True
+)
+
+# Setup layout columns
+col_in, col_out = st.columns([1, 1.35], gap="large")
+
+with col_in:
+    with st.container(border=True):
+        st.markdown('<div style="font-size: 1.15rem; font-weight: 600; color: #0f172a; margin-bottom: 16px;">Patient S-GRAS components</div>', unsafe_allow_html=True)
+        
+        age = st.radio("Age", [0, 1], format_func=lambda x: "<50 y" if x == 0 else "≥50 y", horizontal=True)
+        sympt = st.radio("Symptoms at diagnosis", [0, 1],
+                         format_func=lambda x: "Absent" if x == 0 else "Present", horizontal=True)
+        ensat = st.radio("ENSAT stage", [0, 1], format_func=lambda x: "I–II" if x == 0 else "III", horizontal=True)
+        rstatus = st.radio("Resection status", [0, 1, 2],
+                           format_func=lambda x: {0: "R0", 1: "RX", 2: "R1"}[x], horizontal=True)
+        ki67 = st.radio("Ki-67 index", [0, 1, 2],
+                        format_func=lambda x: {0: "<10%", 1: "10–19%", 2: "≥20%"}[x], horizontal=True)
+        
+    with st.container(border=True):
+        st.markdown('<div style="font-size: 1.15rem; font-weight: 600; color: #0f172a; margin-bottom: 12px;">Timeline Settings</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px;">OS horizon fixed at 60 months (5-year).</div>', unsafe_allow_html=True)
+        
+        horizon_os = 60  # OS fixed at 5-year (60-month) horizon
+        horizon_pfs = st.radio("PFS horizon (months)", [12, 36], index=1,
+                               format_func=lambda x: f"{x} months ({x//12}-year)", horizontal=True)
 
 kw = dict(age=age, sympt=sympt, ensat=ensat, rstatus=rstatus, ki67=ki67)
 score, grp = sgras(age, sympt, ensat, rstatus, ki67)
-st.markdown(f"**S-GRAS score: {score}/9 — {grp} risk group**")
 
-cols = st.columns(2)
-for col, (ep, hz) in zip(cols, [("OS", horizon_os), ("PFS", horizon_pfs)]):
-    with col:
-        yr_lbl = hz // 12
-        lbl = (f"{yr_lbl}-year Overall survival" if ep == "OS"
-               else f"{yr_lbl}-year Progression-free survival")
-        st.subheader(lbl)
-        s0 = surv_at(ep, hz, 0, **kw); s1 = surv_at(ep, hz, 1, **kw)
-        rec = CATE_CI[f"{age}-{sympt}-{ensat}-{rstatus}-{ki67}"][f"{ep}{hz}"]
-        c_pt, c_lo, c_hi = rec["cate"], rec["lo"], rec["hi"]
-        nnt, nnt_lo, nnt_hi = rec["nnt"], rec.get("nnt_lo"), rec.get("nnt_hi")
-        yr = hz // 12
-        # Survival with/without treatment
-        s_a, s_b = st.columns(2)
-        s_a.metric(f"{ep} without mitotane", f"{s0*100:.1f}%")
-        s_b.metric(f"{ep} with mitotane", f"{s1*100:.1f}%")
-        # NNT headline (prominent) + absolute benefit (secondary)
-        nnt_ci = (f"{nnt_lo}–{nnt_hi}" if nnt_lo and nnt_hi else "—")
-        outcome = "survivor" if ep == "OS" else "progression-free patient"
-        tip = (f"One additional {yr}-year {outcome} is expected for every {nnt} patients "
-               f"treated with adjuvant mitotane. NNT = 1 / absolute benefit; the 95% CI is "
-               f"obtained by inverting the bounds of the absolute-benefit CI (Altman 1998). "
-               f"Confidence intervals are from a 1000-replicate bootstrap of the "
-               f"doubly-robust IPTW Cox model.")
-        st.markdown(
-            f"<div style='background:#eef4fb;border-radius:10px;padding:14px 18px;"
-            f"margin:6px 0 2px 0;border:1px solid #cfe0f2'>"
-            f"<span style='font-size:15px;color:#334'>Number needed to treat "
-            f"({yr}-year {ep})</span>"
-            f"<span title=\"{tip}\" style='cursor:help;color:#6b8cae;font-size:14px;"
-            f"margin-left:6px'>&#9432;</span><br>"
-            f"<span style='font-size:44px;font-weight:700;color:#12467a'>{nnt}</span>"
-            f"<span style='font-size:17px;color:#12467a'>&nbsp;&nbsp;(95% CI {nnt_ci})</span>"
-            f"<br><span style='font-size:14px;color:#556'>"
-            f"Absolute {ep} benefit <b>{c_pt:+.1f}%</b> "
-            f"(95% CI {c_lo:+.1f} to {c_hi:+.1f} pp)</span></div>",
-            unsafe_allow_html=True)
-        # clean counterfactual curves (no per-arm ribbons; see benefit CI above)
-        tg, S0 = surv_curve(ep, 0, **kw); _, S1 = surv_curve(ep, 1, **kw)
-        mask = tg <= hz
-        fig, ax = plt.subplots(figsize=(5, 3.2))
-        ax.step(tg[mask], S0[mask] * 100, where="post", color="#B2182B", label="No mitotane")
-        ax.step(tg[mask], S1[mask] * 100, where="post", color="#2166AC", label="Adj. mitotane")
-        ax.set_xlim(0, hz); ax.set_ylim(0, 100)
-        ax.set_xlabel("Months"); ax.set_ylabel(f"{ep} probability (%)")
-        ax.legend(frameon=False, fontsize=8)
-        ax.spines[["top", "right"]].set_visible(False)
-        st.pyplot(fig)
+with col_out:
+    # S-GRAS Score Banner
+    if grp == "Low":
+        badge_class = "risk-low"
+    elif grp == "Intermediate":
+        badge_class = "risk-intermediate"
+    elif grp == "High":
+        badge_class = "risk-high"
+    else:
+        badge_class = "risk-very-high"
+        
+    st.markdown(
+        f"<div class='risk-badge {badge_class}'>"
+        f"S-GRAS score: {score}/9 — {grp} risk group"
+        f"</div>",
+        unsafe_allow_html=True
+    )
+    
+    # Results Columns
+    res_os, res_pfs = st.columns(2, gap="medium")
+    
+    for col, (ep, hz) in zip([res_os, res_pfs], [("OS", horizon_os), ("PFS", horizon_pfs)]):
+        with col:
+            yr_lbl = hz // 12
+            lbl = (f"{yr_lbl}-year Overall survival" if ep == "OS"
+                   else f"{yr_lbl}-year Progression-free survival")
+            st.markdown(f"<div style='font-size: 1.15rem; font-weight: 600; color: #0f172a; margin-bottom: 12px;'>{lbl}</div>", unsafe_allow_html=True)
+            
+            s0 = surv_at(ep, hz, 0, **kw); s1 = surv_at(ep, hz, 1, **kw)
+            rec = CATE_CI[f"{age}-{sympt}-{ensat}-{rstatus}-{ki67}"][f"{ep}{hz}"]
+            c_pt, c_lo, c_hi = rec["cate"], rec["lo"], rec["hi"]
+            nnt, nnt_lo, nnt_hi = rec["nnt"], rec.get("nnt_lo"), rec.get("nnt_hi")
+            yr = hz // 12
+            
+            # Custom styled columns for metric displays
+            st.markdown(
+                f"<div style='display: flex; gap: 10px; margin-bottom: 8px;'>"
+                f"  <div class='metric-card' style='flex: 1; border-left: 4px solid #ef4444;'>"
+                f"    <div style='font-size: 10px; font-weight: 500; color: #64748b; text-transform: uppercase;'>{ep} without mitotane</div>"
+                f"    <div style='font-size: 22px; font-weight: 700; color: #0f172a; margin-top: 4px;'>{s0*100:.1f}%</div>"
+                f"  </div>"
+                f"  <div class='metric-card' style='flex: 1; border-left: 4px solid #3b82f6;'>"
+                f"    <div style='font-size: 10px; font-weight: 500; color: #64748b; text-transform: uppercase;'>{ep} with mitotane</div>"
+                f"    <div style='font-size: 22px; font-weight: 700; color: #0f172a; margin-top: 4px;'>{s1*100:.1f}%</div>"
+                f"  </div>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
+            
+            nnt_ci = (f"{nnt_lo}–{nnt_hi}" if nnt_lo and nnt_hi else "—")
+            outcome = "survivor" if ep == "OS" else "progression-free patient"
+            tip = (f"One additional {yr}-year {outcome} is expected for every {nnt} patients "
+                   f"treated with adjuvant mitotane. NNT = 1 / absolute benefit; the 95% CI is "
+                   f"obtained by inverting the bounds of the absolute-benefit CI (Altman 1998). "
+                   f"Confidence intervals are from a 1000-replicate bootstrap of the "
+                   f"doubly-robust IPTW Cox model.")
+            
+            st.markdown(
+                f"<div class='nnt-card'>"
+                f"  <div style='display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;'>"
+                f"    <span style='font-size: 12px; font-weight: 500; color: #475569;'>Number needed to treat ({yr}-year {ep})</span>"
+                f"    <span title=\"{tip}\" style='cursor:help;color:#94a3b8;font-size:14px;'>&#9432;</span>"
+                f"  </div>"
+                f"  <div style='display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px;'>"
+                f"    <span style='font-size: 34px; font-weight: 700; color: #1e3a8a; line-height: 1;'>{nnt}</span>"
+                f"    <span style='font-size: 14px; font-weight: 500; color: #1e40af;'>(95% CI {nnt_ci})</span>"
+                f"  </div>"
+                f"  <div style='font-size: 12px; color: #475569; margin-top: 4px;'>"
+                f"    Absolute {ep} benefit <b>{c_pt:+.1f}%</b> (95% CI {c_lo:+.1f} to {c_hi:+.1f} pp)"
+                f"  </div>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
+            
+            # Interactive Plotly Step Chart
+            tg, S0 = surv_curve(ep, 0, **kw); _, S1 = surv_curve(ep, 1, **kw)
+            mask = tg <= hz
+            
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=tg[mask],
+                y=S0[mask] * 100,
+                line=dict(shape="hv", color="#ef4444", width=2.5),
+                name="No mitotane",
+                mode="lines",
+                hovertemplate="No mitotane: %{y:.1f}%<extra></extra>"
+            ))
+            fig.add_trace(go.Scatter(
+                x=tg[mask],
+                y=S1[mask] * 100,
+                line=dict(shape="hv", color="#3b82f6", width=2.5),
+                name="Adj. mitotane",
+                mode="lines",
+                hovertemplate="Adj. mitotane: %{y:.1f}%<extra></extra>"
+            ))
+            
+            fig.update_layout(
+                xaxis_title="Months",
+                yaxis_title=f"{ep} probability (%)",
+                yaxis=dict(range=[0, 100], gridcolor="#f1f5f9", zeroline=False),
+                xaxis=dict(range=[0, hz], gridcolor="#f1f5f9", zeroline=False),
+                plot_bgcolor="rgba(0,0,0,0)",
+                paper_bgcolor="rgba(0,0,0,0)",
+                margin=dict(l=40, r=10, t=10, b=40),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1,
+                    font=dict(size=10)
+                ),
+                hovermode="x unified",
+                height=260
+            )
+            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
 hr = P["meta"]["HR"]
 st.divider()
