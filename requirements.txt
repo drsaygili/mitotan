@@ -1,4 +1,7 @@
-streamlit>=1.30
-numpy>=1.24
-pandas>=2.0
-matplotlib>=3.7
+# Pinned deliberately: the app is reached by a QR code on a conference poster and
+# must not change behaviour when a new upstream release appears. Versions below are
+# the ones the app was tested against. matplotlib was removed — it is not imported.
+streamlit==1.62.*
+numpy==2.4.*
+pandas==2.3.*
+plotly==6.9.*
